@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @author Angelo Elias Dalzotto (angelo.dalzotto@edu.pucrs.br)
+ * @brief Partial HTTPS functionality implementation (key exchange and cryptography)
+ * @version 0.1
+ * @date 2022-06-21
+ * 
+ * @details Maiores informações e exemplo no README.md
+ */
+
 #include <iostream>
 #include <algorithm>
 
@@ -8,6 +18,7 @@
 
 int main(int argc, char *argv[])
 {
+	/* Create a CLI parser */
 	CLI::App app{"Partial HTTPS functionality example."};
 
 	/* Require 1 subcommand */
@@ -35,9 +46,11 @@ int main(int argc, char *argv[])
 	}
 
 	if(keygen->parsed()){
+		/* Check B string */
 		if(B_str.size() != 256)
 			throw std::invalid_argument("Invalid B size. Should be 256 characters.");
 
+		/* Create a big integer from argument string */
 		const mpz_class B(
 			B_str,
 			16
@@ -56,14 +69,19 @@ int main(int argc, char *argv[])
 			16
 		);
 
+		/* Generate 'A' and key */
 		DiffieHellman dh(a, B);
 
+		/* Get and print A */
 		mpz_class A = dh.get_A();
 		std::cout << std::hex << A << std::endl;
 
+		/* Get and print key */
 		std::string key = dh.get_key();
 		std::cout << key << std::endl;
+
 	} else if(reverse->parsed()){
+		/* Check received key size */
 		if(key.size() != 32)
 			throw std::invalid_argument("Invalid KEY size. Should be 32 characters.");
 

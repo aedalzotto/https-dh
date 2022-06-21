@@ -3,6 +3,7 @@
 
 #include <cryptopp/sha.h>
 
+/* RFC5114 */
 const mpz_class DiffieHellman::p(
 	"B10B8F96A080E01DDE92DE5EAE5D54EC"
 	"52C99FBCFB06A3C69A6A9DCA52D23B61"
@@ -15,6 +16,7 @@ const mpz_class DiffieHellman::p(
 	16
 );
 
+/* RFC5114 */
 const mpz_class DiffieHellman::g(
 	"A4D1CBD5C3FD34126765A442EFB99905"
 	"F8104DD258AC507FD6406CFF14266D31"
@@ -48,6 +50,27 @@ void DiffieHellman::gen_V()
 	mpz_powm_sec(V.get_mpz_t(), B.get_mpz_t(), a.get_mpz_t(), p.get_mpz_t());
 }
 
+void DiffieHellman::gen_key()
+{
+	CryptoPP::SHA256 hash;
+
+	/* Convert bigint to an array of decoded bytes to use with CryptoPP */
+	const std::string enc_V = V.get_str(16);
+	const std::string dec_V = AES_CBC::hex_decode(enc_V);
+
+	/* Compute SHA256 of V */
+	key.resize(CryptoPP::SHA256::DIGESTSIZE);
+	CryptoPP::SHA256().CalculateDigest(
+		reinterpret_cast<CryptoPP::byte*>(key.data()), 
+		reinterpret_cast<const CryptoPP::byte*>(dec_V.data()), 
+		dec_V.size()
+	);
+
+	/* Get only the first 128 bits of SHA256 and encode to hex */
+	key.resize(CryptoPP::SHA256::DIGESTSIZE/2);
+	key = AES_CBC::hex_encode(key);
+}
+
 mpz_class DiffieHellman::get_A()
 {
 	return A;
@@ -56,24 +79,6 @@ mpz_class DiffieHellman::get_A()
 mpz_class DiffieHellman::get_V()
 {
 	return V;
-}
-
-void DiffieHellman::gen_key()
-{
-	CryptoPP::SHA256 hash;
-
-	const std::string enc_V = V.get_str(16);
-	const std::string dec_V = AES_CBC::hex_decode(enc_V);
-
-	key.resize(CryptoPP::SHA256::DIGESTSIZE);
-	CryptoPP::SHA256().CalculateDigest(
-		reinterpret_cast<CryptoPP::byte*>(key.data()), 
-		reinterpret_cast<const CryptoPP::byte*>(dec_V.data()), 
-		dec_V.size()
-	);
-	key.resize(CryptoPP::SHA256::DIGESTSIZE/2);
-
-	key = AES_CBC::hex_encode(key);
 }
 
 std::string DiffieHellman::get_key()

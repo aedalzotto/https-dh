@@ -44,9 +44,11 @@ std::string AES_CBC::decrypt(const std::string cyphertext)
 	/* Decode hex message */
 	const std::string dec_C = hex_decode(cyphertext);
 
+	/* Separate IV from the first block of received message and remaining message */
 	const std::string iv(dec_C, 0, CryptoPP::AES::BLOCKSIZE);
 	const std::string c(dec_C, CryptoPP::AES::BLOCKSIZE, dec_C.length() - CryptoPP::AES::BLOCKSIZE);
 
+	/* Set key and IV */
 	CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption aes_dec;
 	aes_dec.SetKeyWithIV(
 		reinterpret_cast<const CryptoPP::byte*>(key.data()), 
@@ -54,6 +56,7 @@ std::string AES_CBC::decrypt(const std::string cyphertext)
 		reinterpret_cast<const CryptoPP::byte*>(iv.data())
 	);
 
+	/* Decrypt */
 	std::string plaintext;
 	CryptoPP::StringSource ss(
 		c,
@@ -74,6 +77,7 @@ std::string AES_CBC::encrypt(const std::string plaintext)
 	CryptoPP::SecByteBlock iv(CryptoPP::AES::BLOCKSIZE);
 	prng.GenerateBlock(iv, iv.size());
 
+	/* Set key and IV */
 	CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption aes_enc;
 	aes_enc.SetKeyWithIV(
 		reinterpret_cast<const CryptoPP::byte*>(key.data()), 
@@ -81,6 +85,7 @@ std::string AES_CBC::encrypt(const std::string plaintext)
 		iv
 	);
 
+	/* Encrypt */
 	std::string cyphertext;
 	CryptoPP::StringSource ss(
 		reinterpret_cast<const CryptoPP::byte*>(plaintext.data()), 
@@ -92,7 +97,7 @@ std::string AES_CBC::encrypt(const std::string plaintext)
 		)
 	);
 
+	/* Concatenate random generated IV with cyphertext and encode to hex */
 	const std::string striv(reinterpret_cast<char*>(iv.data()), iv.size());
-
 	return hex_encode(striv+cyphertext);
 }
